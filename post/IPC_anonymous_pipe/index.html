@@ -1,0 +1,276 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Windows进程间通信---匿名管道 | GLS Blog</title>
+<link rel="shortcut icon" href="https://gls1018.github.io/favicon.ico?v=1726899967801">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://gls1018.github.io/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="Windows进程间通信---匿名管道 | GLS Blog - Atom Feed" href="https://gls1018.github.io/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="前言
+匿名管道只能用于父子进程间通信
+相关API
+1. CreatePipe: 创建匿名管道Anonymous Pipe.
+BOOL CreatePipe(
+  [out]          PHANDLE               hR..." />
+    <meta name="keywords" content="Windows" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.5.1/build/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://gls1018.github.io">
+  <img class="avatar" src="https://gls1018.github.io/images/avatar.png?v=1726899967801" alt="">
+  </a>
+  <h1 class="site-title">
+    GLS Blog
+  </h1>
+  <p class="site-description">
+    知行合一
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Windows进程间通信---匿名管道
+            </h2>
+            <div class="post-info">
+              <span>
+                2024-09-21
+              </span>
+              <span>
+                3 min read
+              </span>
+              
+                <a href="https://gls1018.github.io/tag/Windows/" class="post-tag">
+                  # Windows
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content" v-pre>
+                <h2 id="前言">前言</h2>
+<p><strong>匿名管道只能用于父子进程间通信</strong></p>
+<h2 id="相关api">相关API</h2>
+<p><strong>1. CreatePipe: 创建匿名管道Anonymous Pipe.</strong></p>
+<pre><code class="language-cpp">BOOL CreatePipe(
+  [out]          PHANDLE               hReadPipe,
+  [out]          PHANDLE               hWritePipe,
+  [in, optional] LPSECURITY_ATTRIBUTES lpPipeAttributes,
+  [in]           DWORD                 nSize
+);
+</code></pre>
+<p>需要注意第三个参数<code>lpPipeAttributes</code>, 该参数的<code>bInheritHandle</code>成员决定了子进程是否能够继承父进程句柄, 必须为TRUE, 否则子进程无法对父进程的匿名管道进行读写操作.</p>
+<p><strong>2. PeekNamedPipe: 判断管道中是否有数据, 只是判断，并不会读取数据, 如果读取数据可以用ReadFile等IO函数.</strong></p>
+<pre><code class="language-cpp">BOOL PeekNamedPipe(
+[in]            HANDLE  hNamedPipe,
+[out, optional] LPVOID  lpBuffer,
+[in]            DWORD   nBufferSize,
+[out, optional] LPDWORD lpBytesRead,
+[out, optional] LPDWORD lpTotalBytesAvail,
+[out, optional] LPDWORD lpBytesLeftThisMessage
+);
+</code></pre>
+<h2 id="代码示例">代码示例</h2>
+<p>以下代码展示了创建CMD子进程,并重定向CMD子进程的标准输入和标准输出句柄到匿名管道上面。在终端输入命令,并打印出CMD子进程的执行结果.</p>
+<pre><code class="language-cpp">#include &lt;windows.h&gt;
+#include &lt;iostream&gt;
+#include &lt;thread&gt;
+
+int main()
+{
+
+	HANDLE hReadPipe, hWritePipe;
+	HANDLE hReadPipeShell, hWritePipeShell;       
+	
+	//设定管道的安全属性
+	SECURITY_ATTRIBUTES securityAttributes = { 0 };
+	securityAttributes.bInheritHandle = TRUE;
+	securityAttributes.nLength = sizeof(securityAttributes);
+	securityAttributes.lpSecurityDescriptor = NULL;
+
+	CreatePipe(&amp;hReadPipe, &amp;hWritePipeShell, &amp;securityAttributes, 0);
+	CreatePipe(&amp;hReadPipeShell, &amp;hWritePipe, &amp;securityAttributes, 0);
+
+	STARTUPINFO si = { 0 };
+	PROCESS_INFORMATION pi = { 0 };
+
+	si.cb = sizeof(si);
+	si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+	si.wShowWindow = SW_HIDE;
+	si.hStdError = hWritePipeShell;
+	si.hStdOutput = hWritePipeShell;    //重定向 cmd 的标准输入和输出.
+	si.hStdInput = hReadPipeShell;
+
+	BOOL bRet = CreateProcess(&quot;C:\\windows\\system32\\cmd.exe&quot;, NULL, NULL, NULL, TRUE, 0, NULL, NULL, &amp;si, &amp;pi);
+	
+	std::jthread jth([&amp;](){
+		char buf[1024 * 10] = {0};
+		DWORD BytesRead = 0;
+		DWORD TotalBytesAvail = 0;
+		while (PeekNamedPipe(hReadPipe, NULL, NULL, NULL, &amp;TotalBytesAvail, NULL))
+		{
+			if (TotalBytesAvail &gt; 0)
+			{
+				if (ReadFile(hReadPipe, buf, sizeof(buf), NULL, NULL))
+				{
+					std::cout &lt;&lt; buf;
+					memset(buf, 0, sizeof(buf));
+					continue;
+				}	
+			}
+			else
+			{
+				Sleep(100);
+				continue;
+			}
+		}
+		
+		});
+
+	std::string cmd;
+	while (1)
+	{
+		std::getline(std::cin, cmd);
+		cmd += &quot;\r\n&quot;;
+		WriteFile(hWritePipe, cmd.c_str(), cmd.size(), NULL, NULL);
+	}
+	system(&quot;pause&quot;);
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
+	CloseHandle(hWritePipe);
+	CloseHandle(hReadPipe);
+	return 0;
+}
+</code></pre>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E5%89%8D%E8%A8%80">前言</a></li>
+<li><a href="#%E7%9B%B8%E5%85%B3api">相关API</a></li>
+<li><a href="#%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B">代码示例</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://gls1018.github.io/post/vector-rong-qi-shi-yong/">
+              <h3 class="post-title">
+                Vector容器使用
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://gls1018.github.io/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>
