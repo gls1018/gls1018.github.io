@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://gls1018.github.io</id>
+    <title>知行合一</title>
+    <updated>2024-11-10T06:27:52.283Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://gls1018.github.io"/>
+    <link rel="self" href="https://gls1018.github.io/atom.xml"/>
+    <subtitle>温故而知新</subtitle>
+    <logo>https://gls1018.github.io/images/avatar.png</logo>
+    <icon>https://gls1018.github.io/favicon.ico</icon>
+    <rights>All rights reserved 2024, 知行合一</rights>
+    <entry>
+        <title type="html"><![CDATA[Win32窗口笔记]]></title>
+        <id>https://gls1018.github.io/post/win32-chuang-kou-bi-ji/</id>
+        <link href="https://gls1018.github.io/post/win32-chuang-kou-bi-ji/">
+        </link>
+        <updated>2024-09-30T13:03:31.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Windows消息机制]]></title>
+        <id>https://gls1018.github.io/post/Msg_mechanism/</id>
+        <link href="https://gls1018.github.io/post/Msg_mechanism/">
+        </link>
+        <updated>2024-09-22T13:57:33.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Windows进程间通信---邮件槽]]></title>
+        <id>https://gls1018.github.io/post/IPC_mailslot/</id>
+        <link href="https://gls1018.github.io/post/IPC_mailslot/">
+        </link>
+        <updated>2024-09-21T06:35:40.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Windows进程间通信---匿名管道]]></title>
+        <id>https://gls1018.github.io/post/IPC_anonymous_pipe/</id>
+        <link href="https://gls1018.github.io/post/IPC_anonymous_pipe/">
+        </link>
+        <updated>2024-09-21T06:11:52.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[C++基础知识]]></title>
+        <id>https://gls1018.github.io/post/cxu-han-shu/</id>
+        <link href="https://gls1018.github.io/post/cxu-han-shu/">
+        </link>
+        <updated>2024-09-15T11:59:10.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[C++关键字]]></title>
+        <id>https://gls1018.github.io/post/cji-chu/</id>
+        <link href="https://gls1018.github.io/post/cji-chu/">
+        </link>
+        <updated>2024-09-15T05:48:37.000Z</updated>
+    </entry>
+</feed>
